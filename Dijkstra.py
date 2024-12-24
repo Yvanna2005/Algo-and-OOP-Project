@@ -1,86 +1,54 @@
-import heapq
-
- # reading our graph from a file
-def read_file_graph(file):
-    graph = []
-    with open(file,"r") as f:
-        for line in f:
-            row = [ tuple(map(float, triplet.split())) for triplet in line.strip().split('|') ]
-            graph.append(row)
-
-    return graph
-
-def update_graph(graph, u, v, distance, delay_time, traffic_cost):
-     #Update the graph with new edge information.
-    while len(graph) <= u:
-        graph.append([])
-
-    while len(graph[u]) <= v:
-        graph[u].append((0,0,0))
-
-    graph[u][v] = (distance, delay_time, traffic_cost)
-    return graph
-
-def write_txt_graph(graph, file):
-    with open(file, 'w') as f:
-        for row in graph:
-            line = ' | '.join(' '.join(map(str, triplet)) for triplet in row)
-            f.write(line + '\n')
-
- # total cost for a given path
-def calculate_cost(distance, delay_time, fuel_price=1.8, fuel_consumption=5):
-       #calculating the total cost for a path
-    fuel_cost = distance * (fuel_consumption/100) * fuel_price
-    traffic_cost = (0.0082 * delay_time) + (0.052 * delay_time) + (0.0174 * delay_time)
-
-    return traffic_cost + fuel_cost
-
-
- # Dijkstra's algorithm
-def Dijkstras(graph, start, end):
-    n = len(graph)
-    min_heap = [(0,start)]
-    distances = {i: float('inf') for i in range(n)}
-    distances[start] = 0
-    parent = {i: None for i in range(n)}
-
-    while min_heap:
-        current_cost, current_node = heapq.heappop(min_heap)  #we get the node with the smallest cost
-
-         #if we meet the destination, we stop (break)
-        if current_node == end:
+def dijkstra(graph, start):
+    #Initialization
+    unvisited_nodes = list(graph.keys())  # All nodes are initially unvisited
+    distances = {node: float('inf') for node in graph}  # Set all distances to infinity
+    distances[start] = 0  # Distance to the start node is 0
+    previous_nodes = {node: None for node in graph}  # Tracks the path
+    
+    # While there are unvisited nodes
+    while unvisited_nodes:
+        #Select the unvisited node with the smallest distance
+        current_node = min(unvisited_nodes, key=lambda node: distances[node])
+        
+        # If the smallest distance is infinity, the remaining nodes are not connected
+        if distances[current_node] == float('inf'):
             break
+        
+        #Check all unvisited neighbors of the current node
+        for neighbor, weight in graph[current_node].items():
+            if neighbor in unvisited_nodes:  # Only consider unvisited neighbors
+                new_distance = distances[current_node] + weight
+                if new_distance < distances[neighbor]:
+                    distances[neighbor] = new_distance  # Update distance
+                    previous_nodes[neighbor] = current_node  # Update the path
+        
+        #Mark the current node as visited
+        unvisited_nodes.remove(current_node)
 
-         #let's check the neighbours of the current node
-        for neighbour, (distance, delay_time, traffic_cost) in enumerate(graph[current_node]):
-            if distance == 0:
-                continue
+    return distances, previous_nodes
 
-             #lets calculate the total cost taken to reach the neighbour
-            cost = calculate_cost(distance, delay_time)
-            new_cost = current_cost + cost
+#graph
+graph = {
+    'A': {'B': 1, 'C': 4},
+    'B': {'A': 1, 'C': 2, 'D': 5},
+    'C': {'A': 4, 'B': 2, 'D': 1},
+    'D': {'B': 5, 'C': 1}
+}
 
-               #we want the shortest path
-            if new_cost < distances[neighbour]:
-                distances[neighbour] = new_cost
-                parent[neighbour] = current_node
-                heapq.heappush(min_heap,(new_cost,neighbour)) #we update the heap
+# Starting node
+start_node = 'A'
+distances, previous_nodes = dijkstra(graph, start_node)
 
-    if distances[end] == float('inf'):
-        print(f"No path exist from node {start} to node {end}.")
-        return [], float('inf')
+# Printing the results
+print("Shortest distances from node A:")
+for node, distance in distances.items():
+    print(f"Distance to {node}: {distance}")
 
-     #reconstruct the path
+print("\nPaths:")
+for node in graph:
     path = []
-    current = end
+    current = node
     while current is not None:
-        path.append(current)
-        current = parent[current]
-
-    if path[-1] != start:
-        print(f"No path exists between node {start} and node {end}.")
-        return[], float('inf')
-
-
-    return path[::-1], distances[end]
-
+        path.insert(0, current)
+        current = previous_nodes[current]
+    print(f"Path to {node}: {' -> '.join(path)}")
