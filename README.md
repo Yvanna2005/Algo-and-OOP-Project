@@ -111,6 +111,7 @@ Means:
 
 - [Yvanna2005](https://github.com/Yvanna2005)
 - [sims-yann](https://github.com/sims-yann)
+- [LUC-XAVIER](https://github.com/LUC-XAVIER)
 
 ---
 
